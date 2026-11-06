@@ -55,7 +55,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    for (const char invalid : {'\t', '\r', '\n', '\v', '\f', '\'', '"'})
+    // Foam::isspace excludes vertical tab and form feed.
+    for (const char invalid : {'\t', '\r', '\n', '\'', '"'})
     {
         if (fileName::valid(invalid))
         {
