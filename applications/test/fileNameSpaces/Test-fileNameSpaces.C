@@ -2,7 +2,7 @@
   =========                 |
   \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
    \\    /   O peration     | Website:  https://openfoam.org
-    \\  /    A nd           | Copyright (C) 2026 Anchor QEA
+    \\  /    A nd           | Copyright (C) 2026
      \\/     M anipulation  |
 -------------------------------------------------------------------------------
 License

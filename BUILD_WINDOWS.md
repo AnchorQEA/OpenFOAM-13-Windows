@@ -162,7 +162,7 @@ the case.
 For the focused Windows runtime-path regression (OpenFOAM + dummy Pstream only),
 run `bash "$WM_PROJECT_DIR/scripts/windows/run_fileNameSpaces.sh"`. It builds one
 `wmake` test and checks startup and file reading under paths containing ordinary
-spaces, including `Program Files/Anchor QEA`, with filename debug level `2`.
+spaces, including `Program Files/`, with filename debug level `2`.
 See [the Windows helper reference](scripts/windows/README.md) for details. Runtime
 path support does not change the short, space-free path requirement for builds.
 

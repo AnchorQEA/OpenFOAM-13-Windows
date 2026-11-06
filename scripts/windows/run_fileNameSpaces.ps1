@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 $testRoot = Join-Path ([IO.Path]::GetTempPath()) ('openfoam-paths-' + [guid]::NewGuid().ToString('N'))
 Write-Output "Path-test staging: $testRoot"
 
-foreach ($relative in 'NoSpaces', 'Program Files\Anchor QEA') {
+foreach ($relative in 'NoSpaces', 'Program Files\') {
     $bundle = Join-Path $testRoot $relative
     $binaryDir = Join-Path $bundle 'bin'
     $foamDir = Join-Path $bundle 'OpenFOAM-13'

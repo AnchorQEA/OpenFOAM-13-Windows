@@ -81,7 +81,7 @@ bash "$WM_PROJECT_DIR/scripts/windows/run_fileNameSpaces.sh"
 ```
 This uses the existing `applications/test` / `wmake` layout and builds only
 `Test-fileNameSpaces`. It stages the executable, DLLs and configuration in Windows
-temporary directories with and without `Program Files/Anchor QEA`, then checks
+temporary directories with and without `Program Files/`, then checks
 native argument parsing, exact filenames and fixture-file reading. Filename debug
 level must remain `2`; each invocation has a 30-second timeout. Output includes
 `OPENFOAM_PATHS_OK` only on success. Staging directories are retained for diagnosis.
