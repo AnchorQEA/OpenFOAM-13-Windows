@@ -159,6 +159,13 @@ the case.
 > toolchain end-to-end (e.g. `run_serial.sh` prints `SERIAL_PITZDAILY_OK`); for
 > real cases use `./Allrun`.
 
+For the focused Windows runtime-path regression (OpenFOAM + dummy Pstream only),
+run `bash "$WM_PROJECT_DIR/scripts/windows/run_fileNameSpaces.sh"`. It builds one
+`wmake` test and checks startup and file reading under paths containing ordinary
+spaces, including `Program Files/Anchor QEA`, with filename debug level `2`.
+See [the Windows helper reference](scripts/windows/README.md) for details. Runtime
+path support does not change the short, space-free path requirement for builds.
+
 ## 6. Scotch decomposition (optional)
 
 Scotch is built **automatically** by `./Allwmake` (§3), exactly as on Linux: the

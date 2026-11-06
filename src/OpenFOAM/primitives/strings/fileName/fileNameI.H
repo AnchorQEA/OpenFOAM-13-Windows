@@ -103,7 +103,11 @@ inline bool Foam::fileName::valid(char c)
 {
     return
     (
+        #if defined(_WIN32)
+        (!isspace(c) || c == ' ')
+        #else
         !isspace(c)
+        #endif
      && c != '"'   // string quote
      && c != '\''  // string quote
     );

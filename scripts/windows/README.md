@@ -60,6 +60,8 @@ default font is used if it is missing.
 | `windows-terminal-profile.json` | optional Windows Terminal profile + `OpenFOAM Dark` colour scheme |
 | `env.sh` | the shared build/run environment (source this) |
 | `run_serial.sh` | **validation smoke test**: blockMesh→checkMesh→foamRun on pitzDaily |
+| `run_fileNameSpaces.sh` | builds and runs the focused native path regression using OpenFOAM + dummy Pstream |
+| `run_fileNameSpaces.ps1` | native Windows staging and 30-second process checks for the path regression |
 | `build_scotch.sh` | compatibility wrapper: reruns the sibling ThirdParty `Allwmake` (Scotch); `./Allwmake` already does this |
 | `run_decompose.sh` | decomposePar with the `scotch` method (2 subdomains) |
 | `setup_msmpi.sh` | make `libmsmpi.a` from the MS-MPI SDK |
@@ -72,6 +74,19 @@ default font is used if it is missing.
 > `./Allrun` workflow (below).
 
 ## Typical flows
+
+After building OpenFOAM and dummy Pstream, validate runtime paths with spaces:
+```sh
+bash "$WM_PROJECT_DIR/scripts/windows/run_fileNameSpaces.sh"
+```
+This uses the existing `applications/test` / `wmake` layout and builds only
+`Test-fileNameSpaces`. It stages the executable, DLLs and configuration in Windows
+temporary directories with and without `Program Files/Anchor QEA`, then checks
+native argument parsing, exact filenames and fixture-file reading. Filename debug
+level must remain `2`; each invocation has a 30-second timeout. Output includes
+`OPENFOAM_PATHS_OK` only on success. Staging directories are retained for diagnosis.
+Ordinary spaces are supported in Windows runtime paths; quotes and other whitespace
+remain invalid. Keep SDK/source build paths short and without spaces for `wmake`.
 
 Serial build + run:
 ```sh
