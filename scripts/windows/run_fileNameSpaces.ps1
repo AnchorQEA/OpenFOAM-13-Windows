@@ -118,7 +118,9 @@ foreach ($relative in 'NoSpaces', 'Program Files\OpenFOAM') {
     Invoke-StartupCheck $executable $caseA @($fixture, '-case', $caseB) $expectedB
     Invoke-StartupCheck $executable $caseA @($fixture, '-case', $empty) @{
         OPENFOAM_TEST_REQUIRE_CONTROL = '1'
-    } -Failure -Expected ('Missing selected controlDict: ' + [regex]::Escape($empty.Replace('\', '/')))
+    } -Failure -Expected (
+        [regex]::Escape('Missing selected controlDict: "' + $empty.Replace('\', '/') + '/system/controlDict"')
+    )
     Invoke-StartupCheck $executable $caseA @($fixture, '-case') -Failure -Expected 'requires an argument'
     Invoke-StartupCheck $executable $caseA @($fixture, '-case', '-noFunctionObjects') -Failure -Expected 'requires an argument'
     foreach ($flag in '-help', '--help', '-h', '-version', '--version', '-v', '-doc', '-srcDoc') {
