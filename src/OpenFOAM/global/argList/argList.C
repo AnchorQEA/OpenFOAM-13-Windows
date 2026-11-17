@@ -24,6 +24,7 @@ License
 \*---------------------------------------------------------------------------*/
 
 #include "argList.H"
+#include "windowsRuntime.H"
 #include "OSspecific.H"
 #include "clock.H"
 #include "IFstream.H"
@@ -322,6 +323,13 @@ bool Foam::argList::hasArgs(int argc, char *argv[])
 // Transform sequences with "(" ... ")" into string lists in the process
 bool Foam::argList::regroupArgv(int& argc, char**& argv)
 {
+#ifdef _WIN32
+    const std::vector<std::string> raw(argv, argv + argc);
+    const auto grouped = windowsRuntime::groupArguments(raw);
+    for (std::size_t i = 0; i < grouped.size(); ++i) args_[i] = grouped[i];
+    args_.setSize(grouped.size());
+    return grouped.size() < raw.size();
+#else
     int nArgs = 0;
     int listDepth = 0;
     string tmpString;
@@ -373,12 +381,23 @@ bool Foam::argList::regroupArgv(int& argc, char**& argv)
     args_.setSize(nArgs);
 
     return nArgs < argc;
+#endif
 }
 
 
 void Foam::argList::getRootCase()
 {
     fileName casePath;
+
+#ifdef _WIN32
+    const windowsRuntime::Startup& startup = windowsRuntime::startup();
+    if (!startup.error.empty())
+    {
+        FatalErrorInFunction << startup.error << exit(FatalError);
+    }
+    casePath = startup.casePath;
+    if (options_.found("case")) options_.set("case", casePath);
+#else
 
     // [-case dir] specified
     HashTable<string>::const_iterator iter = options_.find("case");
@@ -406,6 +425,7 @@ void Foam::argList::getRootCase()
         // Nothing specified, use the current dir
         casePath = cwd();
     }
+#endif
 
     rootPath_   = casePath.path();
     globalCase_ = casePath.name();
@@ -445,6 +465,14 @@ Foam::argList::argList
     args_(argc),
     options_(argc)
 {
+#ifdef _WIN32
+    const std::string& startupError = windowsRuntime::startup().error;
+    if (!startupError.empty())
+    {
+        FatalErrorInFunction << startupError
+            << ". Use -help for usage." << exit(FatalError);
+    }
+#endif
     // Pre-load any libraries
     {
         const string libsString(getEnv("FOAM_LIBS"));
@@ -1259,6 +1287,11 @@ void Foam::argList::printUsage() const
     forAll(opts, optI)
     {
         const word& optionName = opts[optI];
+        // These are rendered once below, with any application-specific usage.
+        if (optionName == "help" || optionName == "doc" || optionName == "srcDoc")
+        {
+            continue;
+        }
 
         HashTable<string>::const_iterator iter = validOptions.find(optionName);
         Info<< "  -" << optionName;
@@ -1301,21 +1334,23 @@ void Foam::argList::printUsage() const
     printOptionUsage
     (
         9,
-        "display source code in browser"
+        optionUsage.found("srcDoc")
+      ? optionUsage["srcDoc"] : string("display source code in browser")
     );
 
     Info<< "  -doc";
     printOptionUsage
     (
         6,
-        "display application documentation in browser"
+        optionUsage.found("doc")
+      ? optionUsage["doc"] : string("display application documentation in browser")
     );
 
     Info<< "  -help";
     printOptionUsage
     (
         7,
-        "print the usage"
+        optionUsage.found("help") ? optionUsage["help"] : string("print the usage")
     );
 
 

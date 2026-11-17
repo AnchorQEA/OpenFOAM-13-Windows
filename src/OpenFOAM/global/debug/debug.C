@@ -34,6 +34,8 @@ Description
 #include "demandDrivenData.H"
 #include "IOobject.H"
 #include "HashSet.H"
+#include "windowsRuntime.H"
+#include "OSspecific.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -148,11 +150,25 @@ Foam::dictionary& Foam::debug::controlDict()
             }
         }
 
-        IFstream ifs("system/controlDict");
-        if (ifs.good())
+#ifdef _WIN32
+        const windowsRuntime::Startup& startup = windowsRuntime::startup();
+        // Invalid/informational invocations must reach main without reading a case.
+        const fileName caseControlDict
+        (
+            !startup.informational && startup.error.empty()
+          ? fileName(startup.casePath)/"system/controlDict" : fileName()
+        );
+#else
+        const fileName caseControlDict("system/controlDict");
+#endif
+        if (!caseControlDict.empty())
         {
-            entry::disableFunctionEntries = true;
-            controlDictPtr_->merge(dictionary(ifs));
+            IFstream ifs(caseControlDict);
+            if (ifs.good())
+            {
+                entry::disableFunctionEntries = true;
+                controlDictPtr_->merge(dictionary(ifs));
+            }
         }
     }
 
