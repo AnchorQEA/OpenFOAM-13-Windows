@@ -34,16 +34,33 @@ Description
 #include "IFstream.H"
 #include "IOstreams.H"
 #include "OSspecific.H"
+#include "windowsRuntime.H"
+#include <cstdlib>
 
 using namespace Foam;
 
 int main(int argc, char *argv[])
 {
-    if (fileName::debug != 2)
+    const char* expectedDebug = std::getenv("OPENFOAM_TEST_DEBUG");
+    if (fileName::debug != (expectedDebug ? std::atoi(expectedDebug) : 2))
     {
-        Info<< "FAIL: require fileName debug level 2" << endl;
+        Info<< "FAIL: wrong pre-main fileName debug level: " << fileName::debug << endl;
         return 1;
     }
+
+#ifdef _WIN32
+    const auto& startup = windowsRuntime::startup();
+    if (startup.rawArguments != std::vector<std::string>(argv, argv + argc))
+    {
+        Info<< "FAIL: early arguments differ from UCRT argv" << endl;
+        return 1;
+    }
+    if (startup.informational)
+    {
+        Info<< "STARTUP_INFO_OK" << endl;
+        return 0;
+    }
+#endif
 
     #if defined(_WIN32)
     if (!fileName::valid(' '))
@@ -67,7 +84,7 @@ int main(int argc, char *argv[])
 
     // These copies also let us check the path conversion inside libOpenFOAM.
     const string executablePath(argv[0]);
-    const string fixturePath(argc == 2 ? argv[1] : "");
+    const string fixturePath(argc > 1 ? argv[1] : "");
     writeInfoHeader = false;
     argList::noParallel();
     argList::validArgs.append("fixture");
@@ -81,11 +98,32 @@ int main(int argc, char *argv[])
 
     const fileName fixture(args[1]);
     const fileName config(findEtcFile("controlDict", true));
-    const string expectedConfig = getEnv("WM_PROJECT_DIR") + "/etc/controlDict";
+    string expectedConfig = getEnv("OPENFOAM_TEST_ETC");
+    if (expectedConfig.empty())
+    {
+#ifdef _WIN32
+        expectedConfig = windowsRuntime::bundledEtc() + "/controlDict";
+#else
+        expectedConfig = getEnv("WM_PROJECT_DIR") + "/etc/controlDict";
+#endif
+    }
     if (fixture != fixturePath || config != expectedConfig)
     {
         Info<< "FAIL: filename conversion changed a fixture or configuration path"
             << endl;
+        return 1;
+    }
+
+    const string expectedCase = getEnv("OPENFOAM_TEST_CASE");
+    if (!expectedCase.empty() && args.path() != expectedCase)
+    {
+        Info<< "FAIL: parsed case differs from early selected case: " << args.path() << endl;
+        return 1;
+    }
+    if (getEnv("OPENFOAM_TEST_REQUIRE_CONTROL") == "1"
+     && !isFile(args.path()/"system/controlDict"))
+    {
+        Info<< "Missing selected controlDict: " << args.path()/"system/controlDict" << endl;
         return 1;
     }
 

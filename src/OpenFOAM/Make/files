@@ -4,6 +4,7 @@ global/global.Cver
 global/argList/argList.C
 global/clock/clock.C
 global/etcFiles/etcFiles.C
+global/windowsRuntime/windowsRuntime.C
 
 fileOps = global/fileOperations
 $(fileOps)/fileOperation/fileOperation.C

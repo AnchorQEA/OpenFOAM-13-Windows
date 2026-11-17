@@ -26,6 +26,7 @@ License
 #include "etcFiles.H"
 #include "OSspecific.H"
 #include "foamVersion.H"
+#include "windowsRuntime.H"
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
@@ -102,14 +103,30 @@ Foam::fileNameList Foam::findEtcDirs(const fileName& local)
     // * $WM_PROJECT_DIR/etc
     //
     searchDir = getEnv("WM_PROJECT_DIR");
+    bool foundShipped = false;
     if (isDir(searchDir))
     {
         fileName fullName = searchDir/"etc"/local;
         if (isDir(fullName))
         {
             dirs.append(fullName);
+            foundShipped = true;
         }
     }
+
+#ifdef _WIN32
+    if (!foundShipped)
+    {
+        const std::string bundled = windowsRuntime::bundledEtc();
+        if (!bundled.empty())
+        {
+            const fileName fullName = fileName(bundled)/local;
+            if (isDir(fullName)) dirs.append(fullName);
+        }
+    }
+#else
+    (void)foundShipped;
+#endif
 
     return dirs;
 }
@@ -217,12 +234,14 @@ Foam::fileNameList Foam::findEtcFiles
     // * $WM_PROJECT_DIR/etc
     //
     searchDir = getEnv("WM_PROJECT_DIR");
+    bool foundShipped = false;
     if (isDir(searchDir))
     {
         fileName fullName = searchDir/"etc"/name;
         if (isFile(fullName))
         {
             results.append(fullName);
+            foundShipped = true;
             if (findFirst)
             {
                 return results;
@@ -231,6 +250,21 @@ Foam::fileNameList Foam::findEtcFiles
     }
 
     // Not found
+#ifdef _WIN32
+    // Keep the bundled base even when partial user/site overrides were found.
+    if (!foundShipped)
+    {
+        const std::string bundled = windowsRuntime::bundledEtc();
+        if (!bundled.empty())
+        {
+            const fileName fullName = fileName(bundled)/name;
+            if (isFile(fullName)) results.append(fullName);
+        }
+    }
+#else
+    (void)foundShipped;
+#endif
+
     if (results.empty())
     {
         // Abort if the file is mandatory, otherwise return null
